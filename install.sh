@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$HOME/.local/bin"
 
 mkdir -p "$BIN_DIR"
+
 cp "$ROOT_DIR/scripts/code-memory" "$BIN_DIR/code-memory"
 chmod +x "$BIN_DIR/code-memory"
 
@@ -15,7 +16,9 @@ case ":$PATH:" in
     echo "OK: $BIN_DIR is already in PATH"
     ;;
   *)
-    echo "WARNING: $BIN_DIR is not in PATH. Add this to your shell config:"
+    echo "WARNING: $BIN_DIR is not in PATH."
+    echo
+    echo "Add this to your shell config:"
     echo "export PATH=\"$BIN_DIR:\$PATH\""
     echo
     echo "For fish:"

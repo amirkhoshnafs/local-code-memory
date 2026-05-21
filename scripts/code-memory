@@ -2,49 +2,46 @@
 from __future__ import annotations
 
 import argparse
+import shutil
 from pathlib import Path
+
 
 MEMORY_FILES = {
     "summary.md": """# Project Summary
 
 What this project does:
 
-- 
+-
 
 Main files/folders:
 
-- 
+-
 """,
     "commands.md": """# Project Commands
 
 Run project:
 
-
 Run tests:
-
 
 Build:
 
-
 Format/lint:
 
-
 Environment notes:
-
 """,
     "architecture.md": """# Project Architecture
 
 High-level architecture:
 
-- 
+-
 
 Important modules:
 
-- 
+-
 
 Data flow:
 
-- 
+-
 """,
     "style.md": """# Project Style
 
@@ -63,52 +60,50 @@ Assistant rules:
 
 Recurring errors and fixes:
 
-- 
+-
 """,
     "last_session.md": """# Last Session
 
 Current task:
 
-
 Files inspected:
 
-- 
+-
 
 Files changed:
 
-- 
+-
 
 Commands run:
 
-- 
+-
 
 Results:
 
-
 Next step:
-
 """,
     "decisions.md": """# Decisions
 
 Important decisions:
 
-- 
+-
 """,
     "todos.md": """# Todos
 
 ## pending
 
-- 
+-
 
 ## in_progress
 
-- 
+-
 
 ## completed
 
-- 
+-
 """,
 }
+
 
 BRIDGE_ORDER = [
     "summary.md",
@@ -138,7 +133,7 @@ def init_memory(project: Path, memory_dir_name: str) -> Path:
             path.write_text(content, encoding="utf-8")
             print(f"created: {path}")
         else:
-            print(f"exists:  {path}")
+            print(f"exists: {path}")
 
     readme = memory_dir / "README.md"
     if not readme.exists():
@@ -206,30 +201,52 @@ def generate_bridge(project: Path, memory_dir_name: str, bridge_name: str) -> Pa
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Initialize project memory and generate AI_MEMORY.md")
-    parser.add_argument("project", nargs="?", default=".", help="Project directory. Defaults to current directory.")
-    parser.add_argument("--memory-dir", default=".project-memory", help="Memory directory name. Default: .project-memory")
-    parser.add_argument("--bridge", default="AI_MEMORY.md", help="Bridge file name. Default: AI_MEMORY.md")
-    parser.add_argument("--qwen-alias", action="store_true", help="Also write QWEN_MEMORY.md as a compatibility alias.")
-    args = parser.parse_args()
+    parser = argparse.ArgumentParser(
+        description="Initialize project memory and generate AI_MEMORY.md"
+    )
+    parser.add_argument(
+        "project",
+        nargs="?",
+        default=".",
+        help="Project directory. Defaults to current directory.",
+    )
+    parser.add_argument(
+        "--memory-dir",
+        default=".project-memory",
+        help="Memory directory name. Default: .project-memory",
+    )
+    parser.add_argument(
+        "--bridge",
+        default="AI_MEMORY.md",
+        help="Bridge file name. Default: AI_MEMORY.md",
+    )
+    parser.add_argument(
+        "--qwen-alias",
+        action="store_true",
+        help="Also write QWEN_MEMORY.md as a compatibility alias.",
+    )
 
+    args = parser.parse_args()
     project = Path(args.project).expanduser().resolve()
+
     if not project.exists():
         raise SystemExit(f"Project directory does not exist: {project}")
 
     memory_dir = init_memory(project, args.memory_dir)
     bridge = generate_bridge(project, args.memory_dir, args.bridge)
 
+    qwen_bridge = None
     if args.qwen_alias:
         qwen_bridge = generate_bridge(project, args.memory_dir, "QWEN_MEMORY.md")
-    else:
-        qwen_bridge = None
 
-    print("\nDone.")
+    print()
+    print("Done.")
     print(f"Project memory: {memory_dir}")
     print(f"Visible assistant bridge: {bridge}")
+
     if qwen_bridge:
         print(f"Qwen compatibility bridge: {qwen_bridge}")
+
     return 0
 
 

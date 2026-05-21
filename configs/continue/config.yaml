@@ -1,0 +1,39 @@
+name: Local Code Memory Example
+version: 0.0.1
+schema: v1
+
+models:
+  - name: Local Code Agent
+    provider: ollama
+    model: local-code-agent
+    apiBase: http://localhost:11434
+    roles:
+      - chat
+      - edit
+      - apply
+    defaultCompletionOptions:
+      contextLength: 8192
+      temperature: 0.15
+      maxTokens: 2048
+
+  - name: Qwen 2.5 Coder Autocomplete
+    provider: ollama
+    model: qwen2.5-coder:7b
+    apiBase: http://localhost:11434
+    roles:
+      - autocomplete
+    defaultCompletionOptions:
+      contextLength: 4096
+      temperature: 0.1
+      maxTokens: 512
+
+context:
+  - provider: currentFile
+  - provider: file
+  - provider: code
+  - provider: open
+  - provider: search
+  - provider: tree
+  - provider: terminal
+  - provider: diff
+  - provider: problems

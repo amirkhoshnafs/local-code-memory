@@ -1,0 +1,237 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+
+MEMORY_FILES = {
+    "summary.md": """# Project Summary
+
+What this project does:
+
+- 
+
+Main files/folders:
+
+- 
+""",
+    "commands.md": """# Project Commands
+
+Run project:
+
+
+Run tests:
+
+
+Build:
+
+
+Format/lint:
+
+
+Environment notes:
+
+""",
+    "architecture.md": """# Project Architecture
+
+High-level architecture:
+
+- 
+
+Important modules:
+
+- 
+
+Data flow:
+
+- 
+""",
+    "style.md": """# Project Style
+
+Coding style:
+
+- Prefer small targeted edits.
+- Preserve existing style.
+- Do not rewrite whole files unless necessary.
+
+Assistant rules:
+
+- Inspect files before editing.
+- Do not invent files, variables, APIs, or commands that are not in the project.
+""",
+    "known_errors.md": """# Known Errors
+
+Recurring errors and fixes:
+
+- 
+""",
+    "last_session.md": """# Last Session
+
+Current task:
+
+
+Files inspected:
+
+- 
+
+Files changed:
+
+- 
+
+Commands run:
+
+- 
+
+Results:
+
+
+Next step:
+
+""",
+    "decisions.md": """# Decisions
+
+Important decisions:
+
+- 
+""",
+    "todos.md": """# Todos
+
+## pending
+
+- 
+
+## in_progress
+
+- 
+
+## completed
+
+- 
+""",
+}
+
+BRIDGE_ORDER = [
+    "summary.md",
+    "commands.md",
+    "style.md",
+    "last_session.md",
+    "architecture.md",
+    "known_errors.md",
+    "decisions.md",
+    "todos.md",
+]
+
+
+def read_text(path: Path) -> str:
+    if path.exists():
+        return path.read_text(encoding="utf-8", errors="replace").strip()
+    return ""
+
+
+def init_memory(project: Path, memory_dir_name: str) -> Path:
+    memory_dir = project / memory_dir_name
+    memory_dir.mkdir(parents=True, exist_ok=True)
+
+    for filename, content in MEMORY_FILES.items():
+        path = memory_dir / filename
+        if not path.exists():
+            path.write_text(content, encoding="utf-8")
+            print(f"created: {path}")
+        else:
+            print(f"exists:  {path}")
+
+    readme = memory_dir / "README.md"
+    if not readme.exists():
+        readme.write_text(
+            """# Project Memory
+
+Editable project memory for coding assistants.
+
+Use these files to preserve useful engineering context:
+
+- summary.md: what this project does
+- commands.md: run/test/build/lint commands
+- architecture.md: folders, modules, data flow
+- style.md: coding style and assistant rules
+- known_errors.md: recurring errors and fixes
+- last_session.md: latest working state
+- decisions.md: design decisions
+- todos.md: project task state
+
+Do not store secrets, tokens, passwords, API keys, SSH keys, or private credentials here.
+""",
+            encoding="utf-8",
+        )
+        print(f"created: {readme}")
+
+    return memory_dir
+
+
+def generate_bridge(project: Path, memory_dir_name: str, bridge_name: str) -> Path:
+    memory_dir = project / memory_dir_name
+    bridge = project / bridge_name
+
+    parts = [
+        "# AI Project Memory",
+        "",
+        "This file is a visible bridge for coding assistants.",
+        "",
+        f"The canonical memory files live in `{memory_dir_name}/`, but this file combines the important parts so assistants can attach/read them reliably.",
+        "",
+        "## Important Instructions For The Assistant",
+        "",
+        "- Use this file as project memory.",
+        "- Prefer the test command from the Project Commands section when asked how to test.",
+        "- Prefer the run command only when asked how to run the app/script.",
+        "- Follow the Project Style section when editing.",
+        "- Use the Last Session section when continuing previous work.",
+        "- Do not invent files, variables, tools, modules, APIs, or commands that are not in the project.",
+        "- If tests fail, use the exact failing output to make a targeted fix.",
+    ]
+
+    for filename in BRIDGE_ORDER:
+        content = read_text(memory_dir / filename)
+        parts.extend([
+            "",
+            "---",
+            "",
+            f"## Source: {memory_dir_name}/{filename}",
+            "",
+            content,
+        ])
+
+    bridge.write_text("\n".join(parts).rstrip() + "\n", encoding="utf-8")
+    print(f"wrote: {bridge}")
+    return bridge
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Initialize project memory and generate AI_MEMORY.md")
+    parser.add_argument("project", nargs="?", default=".", help="Project directory. Defaults to current directory.")
+    parser.add_argument("--memory-dir", default=".project-memory", help="Memory directory name. Default: .project-memory")
+    parser.add_argument("--bridge", default="AI_MEMORY.md", help="Bridge file name. Default: AI_MEMORY.md")
+    parser.add_argument("--qwen-alias", action="store_true", help="Also write QWEN_MEMORY.md as a compatibility alias.")
+    args = parser.parse_args()
+
+    project = Path(args.project).expanduser().resolve()
+    if not project.exists():
+        raise SystemExit(f"Project directory does not exist: {project}")
+
+    memory_dir = init_memory(project, args.memory_dir)
+    bridge = generate_bridge(project, args.memory_dir, args.bridge)
+
+    if args.qwen_alias:
+        qwen_bridge = generate_bridge(project, args.memory_dir, "QWEN_MEMORY.md")
+    else:
+        qwen_bridge = None
+
+    print("\nDone.")
+    print(f"Project memory: {memory_dir}")
+    print(f"Visible assistant bridge: {bridge}")
+    if qwen_bridge:
+        print(f"Qwen compatibility bridge: {qwen_bridge}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
